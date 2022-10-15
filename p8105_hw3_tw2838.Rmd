@@ -5,10 +5,11 @@ date: "2022-10-15"
 output: html_document
 ---
 
-## *Setting Opotions*
+## Setting Opotions
 
-```{r setup, include=FALSE}
+```{r setup, message=FALSE, warning=FALSE}
 library(tidyverse)
+library(p8105.datasets)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -29,13 +30,88 @@ scale_fill_discrete = scale_fill_viridis_d
 
 
 
-## *Problem #1 Instacart*
+# Problem #1 Instacart
 
 ```{r}
-library(p8105.datasets)
 data("instacart")
 ```
 
+Instacart is an online grocery service that allows you to shop online from local stores. The original dataset contains 1,384,617 observations (rows) of 131,209 unique users, where each row in this dataset is a product from an order. Additionally, each row is characterized by `r ncol(instacart)` variables, including user_id, ordering time, aisle and department information etc. In total, we followed `r n_distinct(instacart$order_id)` orders which are placed across `r min(instacart$order_hour_of_day)`AM to `r max(instacart$order_hour_of_day)`PM throughout the week. Number of days since the last order is tracked through the "days_since_prior_order" variables which is capped at 30. Finally, this dataset involves `r n_distinct(instacart$product_name)` different kinds of products from `r n_distinct(instacart$department)` departments.
 
+
+
+### *How many aisles, and which aisles are the most items ordered from?*
+
+```{r}
+n_aisle = 
+  instacart %>% 
+  group_by(aisle) %>% 
+  summarise(n_order = n())
+
+nrow(n_aisle)
+
+aisle_most = 
+  n_aisle %>% 
+  filter(min_rank(desc(n_order)) == 1)
+```
+
+In this dataset, we have `r nrow(n_aisle)` different aisles, and the aisle "`r aisle_most$aisle`" have the most ordered items. There are `r aisle_most$n_order` orders.
+
+
+
+### *Make a plot that shows the number of items ordered in each aisle*
+Note: We are limiting this to aisles with more than 10000 items ordered/
+
+```{r fig.width = 16, fig.asp=0.5}
+n_aisle %>%
+  filter(n_order > 10000) %>% 
+  ggplot(aes(x=n_order/1000, y=aisle, fill=aisle)) +
+  geom_bar(stat = "identity", alpha = 0.75) +
+  labs(title = "Number of Items Ordered in Each Aisle",
+       x = "Number of Item Ordered (in thousands)",
+       y = "Aisles") +
+  scale_x_continuous(
+    breaks = c(0, 15, 50, 75, 100, 125, 150)) +
+  theme(legend.position = "None")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+# Problem #2 Accelerometer, Activity Counts
+
+```{r message=FALSE, warning=FALSE}
+accel_df = 
+  read_csv(
+    "data/accel_data.csv") %>% 
+  janitor::clean_names()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Problem #3 NY NOAA Data
+
+```{r}
+data("ny_noaa")
+```
 
 
