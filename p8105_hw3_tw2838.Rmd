@@ -10,6 +10,7 @@ output: html_document
 ```{r setup, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(p8105.datasets)
+library(ggridges)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -117,23 +118,94 @@ knitr::kable(mean_df)
 
 
 
-
-
-
 # Problem #2 Accelerometer, Activity Counts
+
+### *Load, tidy, and understand the data*
 
 ```{r message=FALSE, warning=FALSE}
 accel_df = 
   read_csv(
     "data/accel_data.csv") %>% 
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  mutate(day_code = recode(day, "Monday" = "weekday", 
+                           "Tuesday" = "weekday", 
+                           "Wednesday" = "weekday",
+                           "Thursday" = "weekday", 
+                           "Friday" = "weekday", 
+                           "Saturday" = "weekend", 
+                           "Sunday" = "weekend")) %>%
+  pivot_longer(activity_1:activity_1440, 
+               names_to = "measure", 
+               names_prefix = "activity_", 
+               values_to = "value")
 ```
 
+I change the format of the data set through `pivot_longer`. Two new variables are created. "measure" stores the accelerometer measurement times, and "value" saves the measured activity count values. We also have 4 more variable, including "week", "day_id", "day", and "day_code." There are total `r nrow(accel_df)` observations. We have `r n_distinct(accel_df$measure)` distinct measurements everyday for `r n_distinct(accel_df$week)` weeks.
 
 
 
+### *total activity over the day*
+
+```{r message=FALSE, warning=FALSE}
+total_df =
+  accel_df %>% 
+  mutate(code = recode(day, "Monday" = "1_Mon", 
+                           "Tuesday" = "2_Tue", 
+                           "Wednesday" = "3_Wed",
+                           "Thursday" = "4_Thur", 
+                           "Friday" = "5_Fri", 
+                           "Saturday" = "6_Sat", 
+                           "Sunday" = "7_Sun")) %>%
+  group_by(week, code) %>% 
+  summarise(total_activity = round(sum(value, na.rm = TRUE), 0))
+
+total_df_wider =
+  total_df %>% 
+  pivot_wider(names_from = code, 
+              values_from = total_activity)
+```
+
+```{r}
+knitr::kable(total_df_wider)
+```
+
+```{r}
+ggplot(total_df, aes(x = code, y = total_activity, group = week, color = week)) +
+  geom_point() +
+  geom_line() +
+  labs(title = "Daily Total Activity Across the Week",
+       x = "Day",
+       y = "Total Activity") +
+  theme(legend.position = "bottom")
+```
+
+According to the scatter plot, there is no clear total daily activity trend. The change among daily total activity is relatively stable from Tuesday to Thursday in these 5 weeks.
 
 
+
+### *plot that shows the 24-hr activity time*
+
+```{r eval=FALSE}
+ggplot(accel_df, aes(x = measure, y = value, group = day_id, color = week)) +
+  geom_density_ridges() +
+  labs(title = "24-hr Activity Track",
+       x = "Time",
+       y = "Measured Activity") +
+  theme(legend.position = "bottom")
+```
+
+```{r fig.width = 16, fig.asp=0.4}
+accel_df %>% 
+  mutate(measure = as.integer(measure)) %>% 
+ggplot(aes(x = measure, y = value, group = day_id, color = week)) +
+  geom_point(alpha = 0.3) +
+  labs(title = "24-hr Activity Track",
+       x = "Time",
+       y = "Measured Activity") +
+    scale_x_continuous(breaks = c(0, 1440), 
+                     labels = c("12:00am", "11:59pm")) +
+  theme(legend.position = "bottom")
+```
 
 
 
