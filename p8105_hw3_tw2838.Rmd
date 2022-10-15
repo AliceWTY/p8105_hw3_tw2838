@@ -77,7 +77,41 @@ n_aisle %>%
 
 
 
+### *Make a table showing the three most popular items in some aisles*
+I am making table to show the three most popular items in “baking ingredients”, “dog food care”, and “packaged vegetables fruits” aisles. Including the number of times each item is ordered.
 
+```{r message=FALSE, warning=FALSE}
+aisle_df =
+  instacart %>% 
+  filter(aisle == c("baking ingredients", 
+                    "dog food care", 
+                    "packaged vegetables fruits")) %>% 
+  group_by(aisle, product_name) %>% 
+  summarise(n_order = n()) %>% 
+  filter(min_rank(desc(n_order)) < 4)
+```
+
+```{r}
+knitr::kable(aisle_df)
+```
+
+
+
+### *Mean ordered time for some product across the week*
+Making a table to show the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. Formatting this table as a 2 x 7 table.
+
+```{r message=FALSE, warning=FALSE}
+mean_df =
+  instacart %>% 
+  filter(product_name == c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarize(mean_hr = round(mean(order_hour_of_day, na.rm = TRUE),1)) %>%
+              pivot_wider(
+                names_from = order_dow, 
+                values_from = mean_hr)
+
+knitr::kable(mean_df)              
+```
 
 
 
